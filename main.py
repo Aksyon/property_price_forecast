@@ -20,8 +20,28 @@ def find_pages():
     return last_page+1
 
 
+def get_links(all_pages):
+    links_list = []
+    for i in range(1, 2):
+        headers = {
+            'Accept': '*/*',
+            'User-Agent': 'Mozilla/5.0(Windows NT 10.0; Win64; x64) AppleWebKit/537.36(KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        }
+        url = f'https://www.tomsk.ru09.ru/realty/?type=1&otype=1&page={i}'
+        req = requests.get(url=url, headers=headers)
+        soup = BeautifulSoup(req.text, 'lxml')
+        links = soup.find_all(class_='visited_ads')
+        for item in links:
+            adv_link = 'https://www.tomsk.ru09.ru'+ item.get("href")
+            links_list.append(adv_link)
+    return links_list
+
+
+
+
 
 if __name__ == '__main__':
-    find_pages()
+    all_pages=find_pages()
+    get_links(all_pages)
 
 
