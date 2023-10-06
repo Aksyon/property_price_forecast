@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import os.path
 import csv
 import lxml
+from datetime import datetime
+
 
 headers = {
         'Accept': '*/*',
@@ -35,73 +37,115 @@ def get_data(links):
     if not os.path.exists('data'):
         os.mkdir('data')
 
-    with open('data/property_info.csv', 'w') as file:
-        writer = csv.writer(file)
-        writer.writerow(
-            (
-                'кол-во комнат',
-                'общая площадь',
-                'жилая площадь',
-                'кухня',
-                'этаж',
-                'этажность',
-                'отделка',
-                'санузел',
-                'материал',
-                'год постройки',
-                'вид жилья',
-                'балкон',
-                'цена',
-                'описание'
-            )
-        )
-
+    attrs = []
     for link in links:
-
         req = requests.get(url=link, headers=headers)
         soup = BeautifulSoup(req.text, 'lxml')
-        # try:
-        #     attributes = soup.find_all(class_='realty_detail_attr')
-        #
-        #     for attr in attributes:
-        #         if attr.find('th').find('span').text.strip().split('&')[0] == 'Количество комнат':
-        #             rooms = int(attr.find('b').text.strip())
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'Общая площадь':
-        #             full_area = int(attr.find('b').text.strip().rstrip(' кв.м'))
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'жилая':
-        #             living_area = int(attr.find('b').text.strip().rstrip(' кв.м'))
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'кухня':
-        #             kitchen_area = int(attr.find('b').text.strip().rstrip(' кв.м'))
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'Этаж/этажность':
-        #             floor_number = int(attr.find('b').text.strip().split('/')[0])
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'Этаж/этажность':
-        #             floors_in_building = int(attr.find('b').text.strip().split('/')[1])
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'Отделка':
-        #             repair_type = attr.find('b').text.strip()
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'Санузел':
-        #             bathroom_type = attr.find('b').text.strip()
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'Материал':
-        #             material_type = attr.find('b').text.strip()
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'Год постройки':
-        #             bathroom_type = int(attr.find('b').text.strip())
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'Вид':
-        #             flat_type = attr.find('b').text.strip()
-        #         elif attr.find('th').find('span').text.strip().split('&')[0] == 'Балкон/лоджия':
-        #             balcony_type = attr.find('b').text.strip()
-        #             print(rooms)
-        # except Exception:
-        #     continue
+        attributes = soup.find_all(class_='realty_detail_attr')
 
-        price = soup.find(class_='realty_detail_price inline').text.strip().rstrip(' руб.').split('&nbsp;')
-        print(price)
+        dict = {}
+        for attr in attributes:
+            match attr.find('span').text.strip().replace('\xa0', ''):
+                case 'Количество комнат':
+                    try:
+                        rooms = int(attr.find('b').text.strip())
+                    except Exception:
+                        rooms = ''
+                    dict["rooms"] = rooms
+                case 'Общая площадь':
+                    try:
+                        full_area = float(attr.find('b').text.strip().rstrip('\xa0кв.м'))
+                    except Exception:
+                        full_area = ''
+                    dict['full_area'] = full_area
+                case 'жилая':
+                    try:
+                        living_area = float(attr.find('b').text.strip().rstrip('\xa0кв.м'))
+                    except Exception:
+                        living_area = ''
+                    dict['living_area'] = living_area
+                case 'кухня':
+                    try:
+                        kitchen_area = float(attr.find('b').text.strip().rstrip('\xa0кв.м'))
+                    except Exception:
+                        kitchen_area = ''
+                    dict['kitchen_area'] = kitchen_area
+                case 'Этаж/этажность':
+                    try:
+                        floor_number = int(attr.find(class_='nowrap').text.strip().split('/')[0])
+                        floors_in_building = int(attr.find(class_='nowrap').text.strip().split('/')[1])
+                    except Exception:
+                        floor_number = ''
+                        floors_in_building = ''
+                    dict['floor_number'] = floor_number
+                    dict['floors_in_building'] = floors_in_building
+                case 'Отделка':
+                    try:
+                        repair_type = attr.find(class_='nowrap').text.strip().replace('\xa0', ' ')
+                    except Exception:
+                        repair_type = ''
+                    dict['repair_type'] = repair_type
+                case 'Санузел':
+                    try:
+                        bathroom_type = attr.find(class_='nowrap').find('span').text.strip()
+                    except Exception:
+                        bathroom_type = ''
+                    dict['bathroom_type'] = bathroom_type
+                case 'Материал':
+                    try:
+                        material_type = attr.find(class_='nowrap').text.strip()
+                    except Exception:
+                        material_type = ''
+                    dict['material_type'] = material_type
+                case 'Год постройки':
+                    try:
+                        year_build = int(attr.find(class_='nowrap').text.strip())
+                    except Exception:
+                        year_build = ''
+                    dict['year_build'] = year_build
+                case 'Вид':
+                    try:
+                        flat_type = attr.find(class_='nowrap').text.strip()
+                    except Exception:
+                        flat_type = ''
+                    dict['flat_type'] = flat_type
+                case 'Балкон/лоджия':
+                    try:
+                        balcony_type = attr.find(class_='nowrap').text.strip().replace('\xa0', ' ')
+                    except Exception:
+                        balcony_type = ''
+                    dict['balcony_type'] = balcony_type
+        price = int(soup.find(class_='realty_detail_price').text.strip().rstrip(' руб.').replace('\xa0', ''))
+        dict['price'] = price
+        attrs.append(dict)
 
+    field_names = [
+        'price',
+        'rooms',
+        'full_area',
+        'living_area',
+        'kitchen_area',
+        'floor_number',
+        'floors_in_building',
+        'repair_type',
+        'bathroom_type',
+        'material_type',
+        'year_build',
+        'flat_type',
+        'balcony_type']
 
-
+    with open('data/property_info.csv', 'w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=field_names)
+        writer.writeheader()
+        for row in attrs:
+            writer.writerow(row)
 
 
 if __name__ == '__main__':
-    all_pages=find_pages()
+    beginning = datetime.now()
+    all_pages = find_pages()
     links = get_links(all_pages)
     get_data(links)
-
+    diff_time = datetime.now() - beginning
+    print(f'Сбор информации окончен. Это заняло {diff_time}.')
 
