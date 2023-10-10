@@ -23,7 +23,7 @@ def find_pages():
 
 def get_links(all_pages):
     links_list = []
-    for i in range(1, 2):
+    for i in range(1, all_pages+1):
         url = f'https://www.tomsk.ru09.ru/realty/?type=1&otype=1&page={i}'
         req = requests.get(url=url, headers=headers)
         soup = BeautifulSoup(req.text, 'lxml')
@@ -115,9 +115,14 @@ def get_data(links):
                     except Exception:
                         balcony_type = ''
                     dict['balcony_type'] = balcony_type
-        price = int(soup.find(class_='realty_detail_price').text.strip().rstrip(' руб.').replace('\xa0', ''))
+        try:
+            price = float(soup.find(class_='realty_detail_price').text.strip().rstrip(' руб.').replace('\xa0', ''))
+
+        except Exception:
+            price = 0
         dict['price'] = price
         attrs.append(dict)
+        print('.')
 
     field_names = [
         'price',
@@ -142,9 +147,12 @@ def get_data(links):
 
 
 if __name__ == '__main__':
-    beginning = datetime.now()
+
     all_pages = find_pages()
+    print(f'В каталоге найдено {all_pages} страниц.')
     links = get_links(all_pages)
+    print('Ссылки на объявления получены. Начинаю парсинг данных.')
+    beginning = datetime.now()
     get_data(links)
     diff_time = datetime.now() - beginning
     print(f'Сбор информации окончен. Это заняло {diff_time}.')
