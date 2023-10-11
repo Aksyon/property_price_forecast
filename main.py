@@ -60,13 +60,13 @@ def get_data(links):
                     dict['full_area'] = full_area
                 case 'жилая':
                     try:
-                        living_area = float(attr.find('b').text.strip().rstrip('\xa0кв.м'))
+                        living_area = float(attr.find('td').text.strip().rstrip('\xa0кв.м'))
                     except Exception:
                         living_area = ''
                     dict['living_area'] = living_area
                 case 'кухня':
                     try:
-                        kitchen_area = float(attr.find('b').text.strip().rstrip('\xa0кв.м'))
+                        kitchen_area = float(attr.find('td').text.strip().rstrip('\xa0кв.м'))
                     except Exception:
                         kitchen_area = ''
                     dict['kitchen_area'] = kitchen_area
@@ -122,6 +122,7 @@ def get_data(links):
             price = 0
         dict['price'] = price
         attrs.append(dict)
+
         print('.')
 
     field_names = [
@@ -139,11 +140,11 @@ def get_data(links):
         'flat_type',
         'balcony_type']
 
-    with open('data/property_info.csv', 'w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=field_names)
-        writer.writeheader()
-        for row in attrs:
-            writer.writerow(row)
+    # with open('data/property_info.csv', 'w', newline='') as file:
+    #     writer = csv.DictWriter(file, fieldnames=field_names)
+    #     writer.writeheader()
+    #     for row in attrs:
+    #         writer.writerow(row)
 
 
 if __name__ == '__main__':
